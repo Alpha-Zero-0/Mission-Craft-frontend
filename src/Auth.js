@@ -21,8 +21,10 @@ const Auth = () => {
     e.preventDefault();
     const endpoint = mode === "login" ? "login" : "signup";
 
+
+
     // 🟩 Use environment variable or local fallback
-    const backendURL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5432";
+    const backendURL = process.env.REACT_APP_BACKEND_URL;
 
     try {
       const res = await fetch(`${backendURL}/api/auth/${endpoint}`, {
