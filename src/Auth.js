@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import Dashboard from "./Dashboard";
 
-
 const Auth = () => {
   const [mode, setMode] = useState("login"); // or "signup"
   const [username, setUsername] = useState("");
@@ -22,8 +21,11 @@ const Auth = () => {
     e.preventDefault();
     const endpoint = mode === "login" ? "login" : "signup";
 
+    // 🟩 Use environment variable or local fallback
+    const backendURL = process.env.REACT_APP_BACKEND_URL || "http://localhost:5432";
+
     try {
-      const res = await fetch(`http://localhost:5432/api/auth/${endpoint}`, {
+      const res = await fetch(`${backendURL}/api/auth/${endpoint}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -56,14 +58,8 @@ const Auth = () => {
   };
 
   if (loggedInUser) {
-    return (
-      <Dashboard
-        username={loggedInUser}
-        onLogout={handleLogout}
-      />
-    );
+    return <Dashboard username={loggedInUser} onLogout={handleLogout} />;
   }
-  
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -75,14 +71,18 @@ const Auth = () => {
           value={username}
           onChange={(e) => setUsername(e.target.value)}
           required
-        /><br /><br />
+        />
+        <br />
+        <br />
         <input
           type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-        /><br /><br />
+        />
+        <br />
+        <br />
         <button type="submit">
           {mode === "login" ? "Log In" : "Sign Up"}
         </button>
