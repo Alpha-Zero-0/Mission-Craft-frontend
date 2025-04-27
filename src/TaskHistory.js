@@ -5,6 +5,8 @@ const TaskHistory = ({ onBack }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const backendURL = process.env.REACT_APP_BACKEND_URL; // ✅ Add this
+
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -21,7 +23,7 @@ const TaskHistory = ({ onBack }) => {
     const token = localStorage.getItem("token");
 
     try {
-      const res = await fetch(`/api/tasks/${date}`, {
+      const res = await fetch(`${backendURL}/api/tasks/${date}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
