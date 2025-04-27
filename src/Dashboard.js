@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import TaskHistory from "./TaskHistory";
+import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 
 const Dashboard = ({ username, onLogout }) => {
   const [tasks, setTasks] = useState([]);
@@ -12,7 +13,8 @@ const Dashboard = ({ username, onLogout }) => {
 
   const backendURL = process.env.REACT_APP_BACKEND_URL;
 
-  // ✅ Format seconds into h m s string
+  const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AA336A"];
+
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
@@ -20,7 +22,6 @@ const Dashboard = ({ username, onLogout }) => {
     return `${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}m ` : ""}${s}s`;
   };
 
-  // ✅ Load tasks on first render
   useEffect(() => {
     const fetchTasks = async () => {
       const token = localStorage.getItem("token");
@@ -28,23 +29,25 @@ const Dashboard = ({ username, onLogout }) => {
 
       try {
         const res = await fetch(`${backendURL}/api/tasks/${date}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-
         const data = await res.json();
 
         if (Array.isArray(data)) {
           const loaded = data.map((task) => ({
             name: task.name,
             time: task.time,
+            completed: false,
             fixed: task.name === "Screen time",
           }));
 
           const screenTask =
-            loaded.find((t) => t.name === "Screen time") ||
-            { name: "Screen time", time: 0, fixed: true };
+            loaded.find((t) => t.name === "Screen time") || {
+              name: "Screen time",
+              time: 0,
+              completed: false,
+              fixed: true,
+            };
           const otherTasks = loaded.filter((t) => t.name !== "Screen time");
 
           setTasks([screenTask, ...otherTasks]);
@@ -59,7 +62,6 @@ const Dashboard = ({ username, onLogout }) => {
     fetchTasks();
   }, [backendURL]);
 
-  // ✅ Timer logic — waits for tasks to finish loading
   useEffect(() => {
     if (loading) return;
 
@@ -69,9 +71,7 @@ const Dashboard = ({ username, onLogout }) => {
       timerRef.current = setInterval(() => {
         setTasks((prev) =>
           prev.map((task) =>
-            task.name === activeTask
-              ? { ...task, time: task.time + 1 }
-              : task
+            task.name === activeTask ? { ...task, time: task.time + 1 } : task
           )
         );
       }, 1000);
@@ -87,7 +87,7 @@ const Dashboard = ({ username, onLogout }) => {
     );
     if (exists) return alert("Task already exists");
 
-    setTasks([...tasks, { name: newTask, time: 0 }]);
+    setTasks([...tasks, { name: newTask, time: 0, completed: false }]);
     setNewTask("");
   };
 
@@ -96,9 +96,17 @@ const Dashboard = ({ username, onLogout }) => {
     setTasks(tasks.filter((task) => task.name !== name));
   };
 
+  const toggleCompletion = (name) => {
+    setTasks((prev) =>
+      prev.map((task) =>
+        task.name === name ? { ...task, completed: !task.completed } : task
+      )
+    );
+  };
+
   const startTimer = (taskName) => {
     if (activeTask === taskName && isPaused) {
-      setIsPaused(false); // Resume
+      setIsPaused(false);
     } else {
       setActiveTask(taskName);
       setIsPaused(false);
@@ -119,7 +127,7 @@ const Dashboard = ({ username, onLogout }) => {
     const token = localStorage.getItem("token");
     if (!token) return alert("You must be logged in");
 
-    const date = new Date().toISOString().slice(0, 10); // format: YYYY-MM-DD
+    const date = new Date().toISOString().slice(0, 10);
 
     try {
       const res = await fetch(`${backendURL}/api/tasks/save`, {
@@ -140,7 +148,12 @@ const Dashboard = ({ username, onLogout }) => {
 
   if (loading) return <p>⏳ Loading your tasks...</p>;
 
-  // ✅ Show history page
+  const completedTasks = tasks.filter((t) => !t.fixed && t.completed).length;
+  const totalTasks = tasks.filter((t) => !t.fixed).length;
+  const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+  const chartData = tasks.map((task) => ({ name: task.name, value: task.time }));
+
   if (showHistory) {
     return <TaskHistory onBack={() => setShowHistory(false)} />;
   }
@@ -176,21 +189,25 @@ const Dashboard = ({ username, onLogout }) => {
                   )
                 );
               }}
-              style={{
-                width: "80px",
-                marginLeft: "1rem",
-                marginRight: "0.5rem",
-              }}
+              style={{ width: "80px", marginLeft: "1rem", marginRight: "0.5rem" }}
             />
             seconds ({formatTime(task.time)})
 
             {!task.fixed && (
-              <button
-                onClick={() => handleRemoveTask(task.name)}
-                style={{ marginLeft: "1rem" }}
-              >
-                ❌ Remove
-              </button>
+              <>
+                <button
+                  onClick={() => handleRemoveTask(task.name)}
+                  style={{ marginLeft: "1rem" }}
+                >
+                  ❌ Remove
+                </button>
+                <button
+                  onClick={() => toggleCompletion(task.name)}
+                  style={{ marginLeft: "0.5rem" }}
+                >
+                  {task.completed ? "✅ Completed" : "⭕ Incomplete"}
+                </button>
+              </>
             )}
 
             <div style={{ marginTop: "0.5rem" }}>
@@ -198,9 +215,7 @@ const Dashboard = ({ username, onLogout }) => {
                 isPaused ? (
                   <>
                     ⏸️ Paused
-                    <button onClick={() => startTimer(task.name)}>
-                      ▶ Resume
-                    </button>
+                    <button onClick={() => startTimer(task.name)}>▶ Resume</button>
                     <button onClick={stopTimer}>⏹ Stop</button>
                   </>
                 ) : (
@@ -226,6 +241,32 @@ const Dashboard = ({ username, onLogout }) => {
           📅 View History
         </button>
         <button onClick={onLogout}>Log Out</button>
+      </div>
+
+      <div style={{ marginTop: "2rem" }}>
+        <h3>✅ Today's Completion Rate: {completionRate}%</h3>
+      </div>
+
+      <div style={{ marginTop: "2rem" }}>
+        <h3>📊 Time Distribution</h3>
+        <PieChart width={400} height={400}>
+          <Pie
+            data={chartData}
+            dataKey="value"
+            nameKey="name"
+            cx="50%"
+            cy="50%"
+            outerRadius={120}
+            fill="#8884d8"
+            label
+          >
+            {chartData.map((entry, index) => (
+              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip />
+          <Legend />
+        </PieChart>
       </div>
     </div>
   );
