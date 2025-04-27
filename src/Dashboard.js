@@ -10,6 +10,8 @@ const Dashboard = ({ username, onLogout }) => {
   const [showHistory, setShowHistory] = useState(false);
   const timerRef = useRef(null);
 
+  const backendURL = process.env.REACT_APP_BACKEND_URL;
+
   // ✅ Format seconds into h m s string
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
@@ -25,7 +27,7 @@ const Dashboard = ({ username, onLogout }) => {
       const date = new Date().toISOString().slice(0, 10);
 
       try {
-        const res = await fetch(`/api/tasks/${date}`, {
+        const res = await fetch(`${backendURL}/api/tasks/${date}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -55,7 +57,7 @@ const Dashboard = ({ username, onLogout }) => {
     };
 
     fetchTasks();
-  }, []);
+  }, [backendURL]);
 
   // ✅ Timer logic — waits for tasks to finish loading
   useEffect(() => {
@@ -120,7 +122,7 @@ const Dashboard = ({ username, onLogout }) => {
     const date = new Date().toISOString().slice(0, 10); // format: YYYY-MM-DD
 
     try {
-      const res = await fetch("/api/tasks/save", {
+      const res = await fetch(`${backendURL}/api/tasks/save`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
