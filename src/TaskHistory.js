@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
-import { motion } from "framer-motion";
 
 const TaskHistory = ({ onBack }) => {
   const [mode, setMode] = useState("day");
@@ -201,11 +200,7 @@ const TaskHistory = ({ onBack }) => {
           {loading && <p>⏳ Loading weeks data...</p>}
 
           {!loading && selectedWeek1 && selectedWeek2 && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6 }}
-            >
+            <div>
               <div style={{ marginTop: "2rem" }}>
                 <h3>📋 Summary</h3>
                 <div style={{ display: "flex", gap: "2rem" }}>
@@ -233,7 +228,7 @@ const TaskHistory = ({ onBack }) => {
                   {renderCompletionChart()}
                 </ResponsiveContainer>
               </div>
-            </motion.div>
+            </div>
           )}
         </>
       )}
