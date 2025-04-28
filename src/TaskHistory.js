@@ -81,59 +81,45 @@ const TaskHistory = ({ onBack }) => {
 
   const toHours = (seconds) => (seconds / 3600).toFixed(2);
 
-  const comparisonData = [
-    { metric: "Productive Hours", Week1: +toHours(summary1.productiveTime), Week2: +toHours(summary2.productiveTime), type: "hours" },
-    { metric: "Screen Time", Week1: +toHours(summary1.screenTime), Week2: +toHours(summary2.screenTime), type: "hours" },
-    { metric: "Completion Rate", Week1: +summary1.completionRate, Week2: +summary2.completionRate, type: "percent" },
+  const hoursData = [
+    { metric: "Productive Hours", Week1: +toHours(summary1.productiveTime), Week2: +toHours(summary2.productiveTime) },
+    { metric: "Screen Time", Week1: +toHours(summary1.screenTime), Week2: +toHours(summary2.screenTime) },
   ];
 
-  const renderChart = () => {
-    if (chartType === "bar") {
-      return (
-        <BarChart
-          data={comparisonData}
-          margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
-          barGap={10}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="metric" />
-          <YAxis yAxisId="left" orientation="left" label={{ value: 'Hours', angle: -90, position: 'insideLeft' }} />
-          <YAxis yAxisId="right" orientation="right" label={{ value: '%', angle: 90, position: 'insideRight' }} />
-          <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
-          <Legend />
-          {comparisonData.map((entry, index) => (
-            entry.type === "hours" ? (
-              <Bar
-                key={`bar-${entry.metric}`}
-                dataKey={index % 2 === 0 ? "Week1" : "Week2"}
-                fill={index % 2 === 0 ? "#8884d8" : "#82ca9d"}
-                yAxisId="left"
-                animationDuration={1500}
-              />
-            ) : null
-          ))}
-          <Line type="monotone" dataKey="Week1" stroke="#8884d8" yAxisId="right" dot={false} strokeWidth={2} />
-          <Line type="monotone" dataKey="Week2" stroke="#82ca9d" yAxisId="right" dot={false} strokeWidth={2} />
-        </BarChart>
-      );
-    } else {
-      return (
-        <LineChart
-          data={comparisonData}
-          margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="metric" />
-          <YAxis yAxisId="left" orientation="left" label={{ value: 'Hours', angle: -90, position: 'insideLeft' }} />
-          <YAxis yAxisId="right" orientation="right" label={{ value: '%', angle: 90, position: 'insideRight' }} />
-          <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
-          <Legend />
-          <Line type="monotone" dataKey="Week1" stroke="#8884d8" yAxisId="left" strokeWidth={2} />
-          <Line type="monotone" dataKey="Week2" stroke="#82ca9d" yAxisId="left" strokeWidth={2} />
-        </LineChart>
-      );
-    }
-  };
+  const completionData = [
+    { metric: "Completion Rate", Week1: +summary1.completionRate, Week2: +summary2.completionRate },
+  ];
+
+  const renderHoursChart = () => (
+    <BarChart
+      data={hoursData}
+      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+      barGap={10}
+    >
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="metric" />
+      <YAxis label={{ value: "Hours", angle: -90, position: "insideLeft" }} />
+      <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
+      <Legend />
+      <Bar dataKey="Week1" fill="#8884d8" animationDuration={1500} />
+      <Bar dataKey="Week2" fill="#82ca9d" animationDuration={1500} />
+    </BarChart>
+  );
+
+  const renderCompletionChart = () => (
+    <LineChart
+      data={completionData}
+      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+    >
+      <CartesianGrid strokeDasharray="3 3" />
+      <XAxis dataKey="metric" />
+      <YAxis label={{ value: "% Completion", angle: -90, position: "insideLeft" }} />
+      <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
+      <Legend />
+      <Line type="monotone" dataKey="Week1" stroke="#8884d8" strokeWidth={2} />
+      <Line type="monotone" dataKey="Week2" stroke="#82ca9d" strokeWidth={2} />
+    </LineChart>
+  );
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -230,12 +216,16 @@ const TaskHistory = ({ onBack }) => {
               </div>
 
               <div style={{ marginTop: "2rem" }}>
-                <h3>📊 Weekly Comparison</h3>
-                <div style={{ marginBottom: "1rem" }}>
-                  <button onClick={() => setChartType(chartType === "bar" ? "line" : "bar")}>Switch to {chartType === "bar" ? "Line" : "Bar"} Chart</button>
-                </div>
+                <h3>📊 Hours Comparison</h3>
                 <ResponsiveContainer width="100%" height={400}>
-                  {renderChart()}
+                  {renderHoursChart()}
+                </ResponsiveContainer>
+              </div>
+
+              <div style={{ marginTop: "2rem" }}>
+                <h3>📈 Completion Rate Comparison</h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  {renderCompletionChart()}
                 </ResponsiveContainer>
               </div>
             </>
