@@ -1,9 +1,9 @@
 import React, { useState } from "react";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
+import { motion } from "framer-motion";
 
 const TaskHistory = ({ onBack }) => {
   const [mode, setMode] = useState("day");
-  const [chartType, setChartType] = useState("bar");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedWeek1, setSelectedWeek1] = useState("");
   const [selectedWeek2, setSelectedWeek2] = useState("");
@@ -107,18 +107,19 @@ const TaskHistory = ({ onBack }) => {
   );
 
   const renderCompletionChart = () => (
-    <LineChart
+    <BarChart
       data={completionData}
       margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+      barGap={10}
     >
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis dataKey="metric" />
       <YAxis label={{ value: "% Completion", angle: -90, position: "insideLeft" }} />
       <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
       <Legend />
-      <Line type="monotone" dataKey="Week1" stroke="#8884d8" strokeWidth={2} />
-      <Line type="monotone" dataKey="Week2" stroke="#82ca9d" strokeWidth={2} />
-    </LineChart>
+      <Bar dataKey="Week1" fill="#8884d8" animationDuration={1500} />
+      <Bar dataKey="Week2" fill="#82ca9d" animationDuration={1500} />
+    </BarChart>
   );
 
   return (
@@ -200,7 +201,11 @@ const TaskHistory = ({ onBack }) => {
           {loading && <p>⏳ Loading weeks data...</p>}
 
           {!loading && selectedWeek1 && selectedWeek2 && (
-            <>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+            >
               <div style={{ marginTop: "2rem" }}>
                 <h3>📋 Summary</h3>
                 <div style={{ display: "flex", gap: "2rem" }}>
@@ -228,7 +233,7 @@ const TaskHistory = ({ onBack }) => {
                   {renderCompletionChart()}
                 </ResponsiveContainer>
               </div>
-            </>
+            </motion.div>
           )}
         </>
       )}
