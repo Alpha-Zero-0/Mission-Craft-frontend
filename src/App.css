@@ -36,3 +36,13 @@
     transform: rotate(360deg);
   }
 }
+
+/* 🔥 New Animation for Monster breathing */
+@keyframes bounceBreath {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}

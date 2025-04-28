@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import TaskHistory from "./TaskHistory";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
+import MonsterMood from "./components/MonsterMood"; // 🧸 added this!
 
 const Dashboard = ({ username, onLogout }) => {
   const [tasks, setTasks] = useState([]);
@@ -12,7 +13,6 @@ const Dashboard = ({ username, onLogout }) => {
   const timerRef = useRef(null);
 
   const backendURL = process.env.REACT_APP_BACKEND_URL;
-
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#AA336A"];
 
   const formatTime = (seconds) => {
@@ -32,7 +32,6 @@ const Dashboard = ({ username, onLogout }) => {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
-
         if (Array.isArray(data)) {
           const loaded = data.map((task) => ({
             name: task.name,
@@ -41,13 +40,12 @@ const Dashboard = ({ username, onLogout }) => {
             fixed: task.name === "Screen time",
           }));
 
-          const screenTask =
-            loaded.find((t) => t.name === "Screen time") || {
-              name: "Screen time",
-              time: 0,
-              completed: false,
-              fixed: true,
-            };
+          const screenTask = loaded.find((t) => t.name === "Screen time") || {
+            name: "Screen time",
+            time: 0,
+            completed: false,
+            fixed: true,
+          };
           const otherTasks = loaded.filter((t) => t.name !== "Screen time");
 
           setTasks([screenTask, ...otherTasks]);
@@ -64,7 +62,6 @@ const Dashboard = ({ username, onLogout }) => {
 
   useEffect(() => {
     if (loading) return;
-
     clearInterval(timerRef.current);
 
     if (activeTask && !isPaused) {
@@ -86,7 +83,6 @@ const Dashboard = ({ username, onLogout }) => {
       (t) => t.name.toLowerCase() === newTask.toLowerCase()
     );
     if (exists) return alert("Task already exists");
-
     setTasks([...tasks, { name: newTask, time: 0, completed: false }]);
     setNewTask("");
   };
@@ -113,10 +109,7 @@ const Dashboard = ({ username, onLogout }) => {
     }
   };
 
-  const pauseTimer = () => {
-    setIsPaused(true);
-  };
-
+  const pauseTimer = () => setIsPaused(true);
   const stopTimer = () => {
     clearInterval(timerRef.current);
     setActiveTask(null);
@@ -138,7 +131,6 @@ const Dashboard = ({ username, onLogout }) => {
         },
         body: JSON.stringify({ tasks, date }),
       });
-
       const data = await res.json();
       alert(data.message || "Saved.");
     } catch (err) {
@@ -169,116 +161,132 @@ const Dashboard = ({ username, onLogout }) => {
     <div style={{ padding: "2rem" }}>
       <h2>🎯 Welcome, {username}</h2>
 
-      <div>
-        <input
-          type="text"
-          placeholder="New task name"
-          value={newTask}
-          onChange={(e) => setNewTask(e.target.value)}
-        />
-        <button onClick={handleAddTask}>Add Task</button>
-      </div>
-
-      <ul style={{ marginTop: "1rem" }}>
-        {tasks.map((task) => (
-          <li key={task.name} style={{ marginBottom: "0.5rem" }}>
-            <strong>{task.name}</strong>
-
+      {/* Split screen layout */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+        <div style={{ flex: "1" }}>
+          {/* Your main dashboard left side */}
+          <div>
             <input
-              type="number"
-              value={task.time}
-              min="0"
-              onChange={(e) => {
-                const updatedTime = parseInt(e.target.value) || 0;
-                setTasks((prev) =>
-                  prev.map((t) =>
-                    t.name === task.name ? { ...t, time: updatedTime } : t
-                  )
-                );
-              }}
-              style={{ width: "80px", marginLeft: "1rem", marginRight: "0.5rem" }}
+              type="text"
+              placeholder="New task name"
+              value={newTask}
+              onChange={(e) => setNewTask(e.target.value)}
             />
-            seconds ({formatTime(task.time)})
+            <button onClick={handleAddTask}>Add Task</button>
+          </div>
 
-            {!task.fixed && (
-              <>
-                <button
-                  onClick={() => handleRemoveTask(task.name)}
-                  style={{ marginLeft: "1rem" }}
-                >
-                  ❌ Remove
-                </button>
-                <button
-                  onClick={() => toggleCompletion(task.name)}
-                  style={{ marginLeft: "0.5rem" }}
-                >
-                  {task.completed ? "✅ Completed" : "⭕ Incomplete"}
-                </button>
-              </>
-            )}
+          <ul style={{ marginTop: "1rem" }}>
+            {tasks.map((task) => (
+              <li key={task.name} style={{ marginBottom: "0.5rem" }}>
+                <strong>{task.name}</strong>
 
-            <div style={{ marginTop: "0.5rem" }}>
-              {activeTask === task.name ? (
-                isPaused ? (
+                <input
+                  type="number"
+                  value={task.time}
+                  min="0"
+                  onChange={(e) => {
+                    const updatedTime = parseInt(e.target.value) || 0;
+                    setTasks((prev) =>
+                      prev.map((t) =>
+                        t.name === task.name ? { ...t, time: updatedTime } : t
+                      )
+                    );
+                  }}
+                  style={{ width: "80px", marginLeft: "1rem", marginRight: "0.5rem" }}
+                />
+                seconds ({formatTime(task.time)})
+
+                {!task.fixed && (
                   <>
-                    ⏸️ Paused
-                    <button onClick={() => startTimer(task.name)}>▶ Resume</button>
-                    <button onClick={stopTimer}>⏹ Stop</button>
+                    <button
+                      onClick={() => handleRemoveTask(task.name)}
+                      style={{ marginLeft: "1rem" }}
+                    >
+                      ❌ Remove
+                    </button>
+                    <button
+                      onClick={() => toggleCompletion(task.name)}
+                      style={{ marginLeft: "0.5rem" }}
+                    >
+                      {task.completed ? "✅ Completed" : "⭕ Incomplete"}
+                    </button>
                   </>
-                ) : (
-                  <>
-                    ⏱️ Running
-                    <button onClick={pauseTimer}>⏸ Pause</button>
-                    <button onClick={stopTimer}>⏹ Stop</button>
-                  </>
-                )
-              ) : (
-                <button onClick={() => startTimer(task.name)}>▶ Start</button>
-              )}
-            </div>
-          </li>
-        ))}
-      </ul>
+                )}
 
-      <div style={{ marginTop: "2rem" }}>
-        <button onClick={handleSaveTasks} style={{ marginRight: "1rem" }}>
-          💾 Save Progress
-        </button>
-        <button onClick={() => setShowHistory(true)} style={{ marginRight: "1rem" }}>
-          📅 View History
-        </button>
-        <button onClick={onLogout}>Log Out</button>
-      </div>
-
-      <div style={{ marginTop: "2rem" }}>
-        <h3>✅ Today's Completion Rate: {completionRate}%</h3>
-        <p>🧠 Total Productive Time: {formatTime(productiveTime)}</p>
-        <p>📱 Total Screen Time: {formatTime(screenTime)}</p>
-      </div>
-
-      <div style={{ marginTop: "2rem" }}>
-        <h3>📊 Time Distribution</h3>
-        <PieChart width={400} height={400}>
-          <Pie
-            data={chartData}
-            dataKey="value"
-            nameKey="name"
-            cx="50%"
-            cy="50%"
-            outerRadius={120}
-            fill="#8884d8"
-            label
-          >
-            {chartData.map((entry, index) => (
-              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                <div style={{ marginTop: "0.5rem" }}>
+                  {activeTask === task.name ? (
+                    isPaused ? (
+                      <>
+                        ⏸️ Paused
+                        <button onClick={() => startTimer(task.name)}>▶ Resume</button>
+                        <button onClick={stopTimer}>⏹ Stop</button>
+                      </>
+                    ) : (
+                      <>
+                        ⏱️ Running
+                        <button onClick={pauseTimer}>⏸ Pause</button>
+                        <button onClick={stopTimer}>⏹ Stop</button>
+                      </>
+                    )
+                  ) : (
+                    <button onClick={() => startTimer(task.name)}>▶ Start</button>
+                  )}
+                </div>
+              </li>
             ))}
-          </Pie>
-          <Tooltip />
-          <Legend />
-        </PieChart>
+          </ul>
+
+          <div style={{ marginTop: "2rem" }}>
+            <button onClick={handleSaveTasks} style={{ marginRight: "1rem" }}>
+              💾 Save Progress
+            </button>
+            <button onClick={() => setShowHistory(true)} style={{ marginRight: "1rem" }}>
+              📅 View History
+            </button>
+            <button onClick={onLogout}>Log Out</button>
+          </div>
+
+          <div style={{ marginTop: "2rem" }}>
+            <h3>✅ Today's Completion Rate: {completionRate}%</h3>
+            <p>🧠 Total Productive Time: {formatTime(productiveTime)}</p>
+            <p>📱 Total Screen Time: {formatTime(screenTime)}</p>
+          </div>
+
+          <div style={{ marginTop: "2rem" }}>
+            <h3>📊 Time Distribution</h3>
+            <PieChart width={400} height={400}>
+              <Pie
+                data={chartData}
+                dataKey="value"
+                nameKey="name"
+                cx="50%"
+                cy="50%"
+                outerRadius={120}
+                fill="#8884d8"
+                label
+              >
+                {chartData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+              <Legend />
+            </PieChart>
+          </div>
+        </div>
+
+        {/* Monster mood right side */}
+        <div style={{ flex: "0 0 300px", paddingLeft: "2rem" }}>
+          <MonsterMood
+            completionRate={completionRate}
+            productiveTime={productiveTime}
+            screenTime={screenTime}
+          />
+        </div>
       </div>
     </div>
   );
 };
 
 export default Dashboard;
+
