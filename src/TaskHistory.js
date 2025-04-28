@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell, CartesianGrid } from "recharts";
 
 const TaskHistory = ({ onBack }) => {
   const [mode, setMode] = useState("day");
@@ -82,9 +82,9 @@ const TaskHistory = ({ onBack }) => {
   const toHours = (seconds) => (seconds / 3600).toFixed(2);
 
   const comparisonData = [
-    { name: "Productive Hours", Week1: +toHours(summary1.productiveTime), Week2: +toHours(summary2.productiveTime) },
-    { name: "Screen Time", Week1: +toHours(summary1.screenTime), Week2: +toHours(summary2.screenTime) },
-    { name: "Completion %", Week1: +summary1.completionRate, Week2: +summary2.completionRate },
+    { metric: "Productive Hours", Week1: +toHours(summary1.productiveTime), Week2: +toHours(summary2.productiveTime), type: "hours" },
+    { metric: "Screen Time", Week1: +toHours(summary1.screenTime), Week2: +toHours(summary2.screenTime), type: "hours" },
+    { metric: "Completion Rate", Week1: +summary1.completionRate, Week2: +summary2.completionRate, type: "percent" },
   ];
 
   const renderChart = () => {
@@ -92,37 +92,44 @@ const TaskHistory = ({ onBack }) => {
       return (
         <BarChart
           data={comparisonData}
-          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
           barGap={10}
         >
-          <XAxis dataKey="name" />
-          <YAxis />
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="metric" />
+          <YAxis yAxisId="left" orientation="left" label={{ value: 'Hours', angle: -90, position: 'insideLeft' }} />
+          <YAxis yAxisId="right" orientation="right" label={{ value: '%', angle: 90, position: 'insideRight' }} />
           <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
           <Legend />
-          <Bar dataKey="Week1" name="Week 1" animationDuration={1500}>
-            {comparisonData.map((entry, index) => (
-              <Cell key={`week1-${index}`} fill={entry.Week1 > entry.Week2 ? "#4caf50" : "#f44336"} />
-            ))}
-          </Bar>
-          <Bar dataKey="Week2" name="Week 2" animationDuration={1500}>
-            {comparisonData.map((entry, index) => (
-              <Cell key={`week2-${index}`} fill={entry.Week2 > entry.Week1 ? "#4caf50" : "#f44336"} />
-            ))}
-          </Bar>
+          {comparisonData.map((entry, index) => (
+            entry.type === "hours" ? (
+              <Bar
+                key={`bar-${entry.metric}`}
+                dataKey={index % 2 === 0 ? "Week1" : "Week2"}
+                fill={index % 2 === 0 ? "#8884d8" : "#82ca9d"}
+                yAxisId="left"
+                animationDuration={1500}
+              />
+            ) : null
+          ))}
+          <Line type="monotone" dataKey="Week1" stroke="#8884d8" yAxisId="right" dot={false} strokeWidth={2} />
+          <Line type="monotone" dataKey="Week2" stroke="#82ca9d" yAxisId="right" dot={false} strokeWidth={2} />
         </BarChart>
       );
     } else {
       return (
         <LineChart
           data={comparisonData}
-          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          margin={{ top: 20, right: 50, left: 20, bottom: 5 }}
         >
-          <XAxis dataKey="name" />
-          <YAxis />
+          <CartesianGrid strokeDasharray="3 3" />
+          <XAxis dataKey="metric" />
+          <YAxis yAxisId="left" orientation="left" label={{ value: 'Hours', angle: -90, position: 'insideLeft' }} />
+          <YAxis yAxisId="right" orientation="right" label={{ value: '%', angle: 90, position: 'insideRight' }} />
           <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
           <Legend />
-          <Line type="monotone" dataKey="Week1" stroke="#8884d8" strokeWidth={2} />
-          <Line type="monotone" dataKey="Week2" stroke="#82ca9d" strokeWidth={2} />
+          <Line type="monotone" dataKey="Week1" stroke="#8884d8" yAxisId="left" strokeWidth={2} />
+          <Line type="monotone" dataKey="Week2" stroke="#82ca9d" yAxisId="left" strokeWidth={2} />
         </LineChart>
       );
     }
