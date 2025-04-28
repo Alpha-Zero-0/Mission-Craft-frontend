@@ -16,8 +16,7 @@ const TaskHistory = ({ onBack }) => {
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}m ` : ""}${s}s`;
+    return `${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}m ` : ""}`.trim();
   };
 
   const fetchDayTasks = async (date, setter) => {
@@ -93,49 +92,32 @@ const TaskHistory = ({ onBack }) => {
   const COLORS = ["#0088FE", "#00C49F", "#FFBB28", "#FF8042", "#A28DFF", "#FF6666"];
 
   const renderHoursChart = () => (
-    <BarChart
-      data={hoursData}
-      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-      barGap={10}
-    >
+    <BarChart data={hoursData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barGap={10}>
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis dataKey="metric" />
       <YAxis label={{ value: "Hours", angle: -90, position: "insideLeft" }} />
       <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
       <Legend />
-      <Bar dataKey="Week1" fill="#8884d8" animationDuration={1500} />
-      <Bar dataKey="Week2" fill="#82ca9d" animationDuration={1500} />
+      <Bar dataKey="Week1" fill="#8884d8" />
+      <Bar dataKey="Week2" fill="#82ca9d" />
     </BarChart>
   );
 
   const renderCompletionChart = () => (
-    <BarChart
-      data={completionData}
-      margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-      barGap={10}
-    >
+    <BarChart data={completionData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }} barGap={10}>
       <CartesianGrid strokeDasharray="3 3" />
       <XAxis dataKey="metric" />
       <YAxis label={{ value: "% Completion", angle: -90, position: "insideLeft" }} />
       <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
       <Legend />
-      <Bar dataKey="Week1" fill="#8884d8" animationDuration={1500} />
-      <Bar dataKey="Week2" fill="#82ca9d" animationDuration={1500} />
+      <Bar dataKey="Week1" fill="#8884d8" />
+      <Bar dataKey="Week2" fill="#82ca9d" />
     </BarChart>
   );
 
   const renderDayPieChart = () => (
     <PieChart>
-      <Pie
-        data={tasks.map(task => ({ name: task.name, value: task.time }))}
-        dataKey="value"
-        nameKey="name"
-        cx="50%"
-        cy="50%"
-        outerRadius={120}
-        fill="#8884d8"
-        label
-      >
+      <Pie data={tasks.map(task => ({ name: task.name, value: task.time }))} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={120} fill="#8884d8" label>
         {tasks.map((_, index) => (
           <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
         ))}
@@ -146,7 +128,7 @@ const TaskHistory = ({ onBack }) => {
   );
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div style={{ padding: "2rem", minHeight: "100vh", background: "linear-gradient(135deg, #f0f4ff, #dfe9f3)" }}>
       <h2>📅 Task History</h2>
 
       <div style={{ marginBottom: "1rem" }}>
