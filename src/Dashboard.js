@@ -21,6 +21,13 @@ const Dashboard = ({ username, onLogout }) => {
     return `${h}h ${m}m`;
   };
 
+  const formatTooltipTime = (hoursDecimal) => {
+    const totalMinutes = Math.round(hoursDecimal * 60);
+    const h = Math.floor(totalMinutes / 60);
+    const m = totalMinutes % 60;
+    return `${h}h ${m}m`;
+  };
+
   useEffect(() => {
     const fetchTasks = async () => {
       const token = localStorage.getItem("token");
@@ -255,7 +262,7 @@ const Dashboard = ({ username, onLogout }) => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => `${value.toFixed(2)}h`} />
+              <Tooltip formatter={(value) => formatTooltipTime(value)} />
               <Legend />
             </PieChart>
           </div>
