@@ -166,7 +166,11 @@ const Dashboard = ({ username, onLogout }) => {
   }
 
   return (
-    <div style={{ padding: "2rem" }}>
+    <div style={{
+      padding: "2rem",
+      minHeight: "100vh",
+      background: "linear-gradient(135deg, #f0f4ff, #dfe9f3)",
+    }}>
       <h2>🎯 Welcome, {username}</h2>
 
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
