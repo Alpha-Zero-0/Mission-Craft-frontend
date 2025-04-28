@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import TaskHistory from "./TaskHistory";
 import { PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
-import MonsterMood from "./components/MonsterMood"; // 🧸 added this!
+import MonsterMood from "./components/MonsterMood";
 
 const Dashboard = ({ username, onLogout }) => {
   const [tasks, setTasks] = useState([]);
@@ -18,8 +18,7 @@ const Dashboard = ({ username, onLogout }) => {
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h > 0 ? `${h}h ` : ""}${m > 0 ? `${m}m ` : ""}${s}s`;
+    return `${h}h ${m}m`;
   };
 
   useEffect(() => {
@@ -68,7 +67,7 @@ const Dashboard = ({ username, onLogout }) => {
       timerRef.current = setInterval(() => {
         setTasks((prev) =>
           prev.map((task) =>
-            task.name === activeTask ? { ...task, time: task.time + 1 } : task
+            task.name === activeTask ? { ...task, time: Math.min(task.time + 1, 86400) } : task
           )
         );
       }, 1000);
@@ -79,9 +78,7 @@ const Dashboard = ({ username, onLogout }) => {
 
   const handleAddTask = () => {
     if (!newTask.trim()) return;
-    const exists = tasks.find(
-      (t) => t.name.toLowerCase() === newTask.toLowerCase()
-    );
+    const exists = tasks.find((t) => t.name.toLowerCase() === newTask.toLowerCase());
     if (exists) return alert("Task already exists");
     setTasks([...tasks, { name: newTask, time: 0, completed: false }]);
     setNewTask("");
@@ -144,14 +141,18 @@ const Dashboard = ({ username, onLogout }) => {
   const totalTasks = tasks.filter((t) => !t.fixed).length;
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
-  const productiveTime = tasks
-    .filter((t) => !t.fixed)
-    .reduce((sum, t) => sum + t.time, 0);
-  const screenTime = tasks
-    .filter((t) => t.fixed && t.name === "Screen time")
-    .reduce((sum, t) => sum + t.time, 0);
+  const productiveTime = tasks.filter((t) => !t.fixed).reduce((sum, t) => sum + t.time, 0);
+  const screenTime = tasks.filter((t) => t.fixed && t.name === "Screen time").reduce((sum, t) => sum + t.time, 0);
 
-  const chartData = tasks.map((task) => ({ name: task.name, value: task.time }));
+  const chartData = tasks.map((task) => ({ name: task.name, value: task.time / 3600 }));
+
+  const handleTimeChange = (name, hours, minutes) => {
+    let newTime = hours * 3600 + minutes * 60;
+    if (newTime > 86400) newTime = 86400;
+    setTasks((prev) =>
+      prev.map((task) => (task.name === name ? { ...task, time: newTime } : task))
+    );
+  };
 
   if (showHistory) {
     return <TaskHistory onBack={() => setShowHistory(false)} />;
@@ -161,10 +162,8 @@ const Dashboard = ({ username, onLogout }) => {
     <div style={{ padding: "2rem" }}>
       <h2>🎯 Welcome, {username}</h2>
 
-      {/* Split screen layout */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
         <div style={{ flex: "1" }}>
-          {/* Your main dashboard left side */}
           <div>
             <input
               type="text"
@@ -176,64 +175,51 @@ const Dashboard = ({ username, onLogout }) => {
           </div>
 
           <ul style={{ marginTop: "1rem" }}>
-            {tasks.map((task) => (
-              <li key={task.name} style={{ marginBottom: "0.5rem" }}>
-                <strong>{task.name}</strong>
+            {tasks.map((task) => {
+              const hours = Math.floor(task.time / 3600);
+              const minutes = Math.floor((task.time % 3600) / 60);
+              return (
+                <li key={task.name} style={{ marginBottom: "1rem" }}>
+                  <strong>{task.name}</strong>
+                  <div style={{ marginTop: "0.5rem" }}>
+                    <input
+                      type="number"
+                      min="0"
+                      max="24"
+                      value={hours}
+                      onChange={(e) => handleTimeChange(task.name, parseInt(e.target.value) || 0, minutes)}
+                      style={{ width: "60px", marginRight: "0.5rem" }}
+                    />h
+                    <input
+                      type="number"
+                      min="0"
+                      max="59"
+                      value={minutes}
+                      onChange={(e) => handleTimeChange(task.name, hours, parseInt(e.target.value) || 0)}
+                      style={{ width: "60px", marginLeft: "0.5rem", marginRight: "0.5rem" }}
+                    />m
+                  </div>
+                  ({formatTime(task.time)})
 
-                <input
-                  type="number"
-                  value={task.time}
-                  min="0"
-                  onChange={(e) => {
-                    const updatedTime = parseInt(e.target.value) || 0;
-                    setTasks((prev) =>
-                      prev.map((t) =>
-                        t.name === task.name ? { ...t, time: updatedTime } : t
-                      )
-                    );
-                  }}
-                  style={{ width: "80px", marginLeft: "1rem", marginRight: "0.5rem" }}
-                />
-                seconds ({formatTime(task.time)})
-
-                {!task.fixed && (
-                  <>
-                    <button
-                      onClick={() => handleRemoveTask(task.name)}
-                      style={{ marginLeft: "1rem" }}
-                    >
-                      ❌ Remove
-                    </button>
-                    <button
-                      onClick={() => toggleCompletion(task.name)}
-                      style={{ marginLeft: "0.5rem" }}
-                    >
-                      {task.completed ? "✅ Completed" : "⭕ Incomplete"}
-                    </button>
-                  </>
-                )}
-
-                <div style={{ marginTop: "0.5rem" }}>
-                  {activeTask === task.name ? (
-                    isPaused ? (
-                      <>
-                        ⏸️ Paused
-                        <button onClick={() => startTimer(task.name)}>▶ Resume</button>
-                        <button onClick={stopTimer}>⏹ Stop</button>
-                      </>
-                    ) : (
-                      <>
-                        ⏱️ Running
-                        <button onClick={pauseTimer}>⏸ Pause</button>
-                        <button onClick={stopTimer}>⏹ Stop</button>
-                      </>
-                    )
-                  ) : (
-                    <button onClick={() => startTimer(task.name)}>▶ Start</button>
+                  {!task.fixed && (
+                    <>
+                      <button
+                        onClick={() => handleRemoveTask(task.name)}
+                        style={{ marginLeft: "1rem" }}
+                      >
+                        ❌ Remove
+                      </button>
+                      <button
+                        onClick={() => toggleCompletion(task.name)}
+                        style={{ marginLeft: "0.5rem" }}
+                      >
+                        {task.completed ? "✅ Completed" : "⭕ Incomplete"}
+                      </button>
+                    </>
                   )}
-                </div>
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
 
           <div style={{ marginTop: "2rem" }}>
@@ -269,13 +255,12 @@ const Dashboard = ({ username, onLogout }) => {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip />
+              <Tooltip formatter={(value) => `${value.toFixed(2)}h`} />
               <Legend />
             </PieChart>
           </div>
         </div>
 
-        {/* Monster mood right side */}
         <div style={{ flex: "0 0 300px", paddingLeft: "2rem" }}>
           <MonsterMood
             completionRate={completionRate}
@@ -289,4 +274,3 @@ const Dashboard = ({ username, onLogout }) => {
 };
 
 export default Dashboard;
-
