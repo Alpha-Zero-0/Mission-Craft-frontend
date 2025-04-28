@@ -37,7 +37,7 @@ const Dashboard = ({ username, onLogout }) => {
           const loaded = data.map((task) => ({
             name: task.name,
             time: task.time,
-            completed: false,
+            completed: task.completed || false,
             fixed: task.name === "Screen time",
           }));
 
@@ -152,6 +152,13 @@ const Dashboard = ({ username, onLogout }) => {
   const totalTasks = tasks.filter((t) => !t.fixed).length;
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
+  const productiveTime = tasks
+    .filter((t) => !t.fixed)
+    .reduce((sum, t) => sum + t.time, 0);
+  const screenTime = tasks
+    .filter((t) => t.fixed && t.name === "Screen time")
+    .reduce((sum, t) => sum + t.time, 0);
+
   const chartData = tasks.map((task) => ({ name: task.name, value: task.time }));
 
   if (showHistory) {
@@ -245,6 +252,8 @@ const Dashboard = ({ username, onLogout }) => {
 
       <div style={{ marginTop: "2rem" }}>
         <h3>✅ Today's Completion Rate: {completionRate}%</h3>
+        <p>🧠 Total Productive Time: {formatTime(productiveTime)}</p>
+        <p>📱 Total Screen Time: {formatTime(screenTime)}</p>
       </div>
 
       <div style={{ marginTop: "2rem" }}>
