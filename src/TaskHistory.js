@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer, Cell } from "recharts";
 
 const TaskHistory = ({ onBack }) => {
-  const [mode, setMode] = useState("day"); // "day" or "week"
+  const [mode, setMode] = useState("day");
+  const [chartType, setChartType] = useState("bar");
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedWeek1, setSelectedWeek1] = useState("");
   const [selectedWeek2, setSelectedWeek2] = useState("");
@@ -27,11 +28,7 @@ const TaskHistory = ({ onBack }) => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-      if (Array.isArray(data)) {
-        setter(data);
-      } else {
-        setter([]);
-      }
+      setter(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error("Failed to load tasks:", err);
       setter([]);
@@ -40,20 +37,20 @@ const TaskHistory = ({ onBack }) => {
 
   const fetchWeekTasks = async (startDate, setter) => {
     setLoading(true);
-    const dates = [];
     const start = new Date(startDate);
-    for (let i = 0; i < 7; i++) {
+    const dates = Array.from({ length: 7 }, (_, i) => {
       const d = new Date(start);
-      d.setDate(d.getDate() + i);
-      dates.push(d.toISOString().slice(0, 10));
-    }
+      d.setDate(start.getDate() + i);
+      return d.toISOString().slice(0, 10);
+    });
 
     const allTasks = [];
-    for (const date of dates) {
-      await fetchDayTasks(date, (tasksOfDay) => {
+    await Promise.all(
+      dates.map(date => fetchDayTasks(date, (tasksOfDay) => {
         allTasks.push(...tasksOfDay);
-      });
-    }
+      }))
+    );
+
     setter(allTasks);
     setLoading(false);
   };
@@ -74,7 +71,7 @@ const TaskHistory = ({ onBack }) => {
       }
     });
 
-    const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+    const completionRate = totalTasks > 0 ? ((completedTasks / totalTasks) * 100).toFixed(2) : "0.00";
 
     return { productiveTime, screenTime, completionRate };
   };
@@ -82,11 +79,54 @@ const TaskHistory = ({ onBack }) => {
   const summary1 = calculateSummary(week1Data);
   const summary2 = calculateSummary(week2Data);
 
+  const toHours = (seconds) => (seconds / 3600).toFixed(2);
+
   const comparisonData = [
-    { name: "Productive Hours", Week1: summary1.productiveTime / 3600, Week2: summary2.productiveTime / 3600 },
-    { name: "Screen Time", Week1: summary1.screenTime / 3600, Week2: summary2.screenTime / 3600 },
-    { name: "Completion %", Week1: summary1.completionRate, Week2: summary2.completionRate },
+    { name: "Productive Hours", Week1: +toHours(summary1.productiveTime), Week2: +toHours(summary2.productiveTime) },
+    { name: "Screen Time", Week1: +toHours(summary1.screenTime), Week2: +toHours(summary2.screenTime) },
+    { name: "Completion %", Week1: +summary1.completionRate, Week2: +summary2.completionRate },
   ];
+
+  const renderChart = () => {
+    if (chartType === "bar") {
+      return (
+        <BarChart
+          data={comparisonData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+          barGap={10}
+        >
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
+          <Legend />
+          <Bar dataKey="Week1" name="Week 1" animationDuration={1500}>
+            {comparisonData.map((entry, index) => (
+              <Cell key={`week1-${index}`} fill={entry.Week1 > entry.Week2 ? "#4caf50" : "#f44336"} />
+            ))}
+          </Bar>
+          <Bar dataKey="Week2" name="Week 2" animationDuration={1500}>
+            {comparisonData.map((entry, index) => (
+              <Cell key={`week2-${index}`} fill={entry.Week2 > entry.Week1 ? "#4caf50" : "#f44336"} />
+            ))}
+          </Bar>
+        </BarChart>
+      );
+    } else {
+      return (
+        <LineChart
+          data={comparisonData}
+          margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+        >
+          <XAxis dataKey="name" />
+          <YAxis />
+          <Tooltip formatter={(value) => (typeof value === "number" ? value.toFixed(2) : value)} />
+          <Legend />
+          <Line type="monotone" dataKey="Week1" stroke="#8884d8" strokeWidth={2} />
+          <Line type="monotone" dataKey="Week2" stroke="#82ca9d" strokeWidth={2} />
+        </LineChart>
+      );
+    }
+  };
 
   return (
     <div style={{ padding: "2rem" }}>
@@ -119,7 +159,7 @@ const TaskHistory = ({ onBack }) => {
           {!loading && tasks.length > 0 && (
             <ul style={{ marginTop: "1rem" }}>
               {tasks.map((task) => (
-                <li key={task.name}>
+                <li key={task.id || task.name}>
                   <strong>{task.name}</strong> — {formatTime(task.time)}
                 </li>
               ))}
@@ -171,32 +211,24 @@ const TaskHistory = ({ onBack }) => {
               <div style={{ marginTop: "2rem" }}>
                 <h3>📋 Summary</h3>
                 <div style={{ display: "flex", gap: "2rem" }}>
-                  <div style={{ border: "1px solid #ccc", padding: "1rem", borderRadius: "8px" }}>
-                    <h4>Week 1</h4>
-                    <p>Productive Hours: {summary1.productiveTime / 3600}h</p>
-                    <p>Screen Time: {summary1.screenTime / 3600}h</p>
-                    <p>Completion Rate: {summary1.completionRate}%</p>
-                  </div>
-                  <div style={{ border: "1px solid #ccc", padding: "1rem", borderRadius: "8px" }}>
-                    <h4>Week 2</h4>
-                    <p>Productive Hours: {summary2.productiveTime / 3600}h</p>
-                    <p>Screen Time: {summary2.screenTime / 3600}h</p>
-                    <p>Completion Rate: {summary2.completionRate}%</p>
-                  </div>
+                  {[summary1, summary2].map((summary, index) => (
+                    <div key={index} style={{ border: "1px solid #ccc", padding: "1rem", borderRadius: "8px" }}>
+                      <h4>Week {index + 1}</h4>
+                      <p>Productive Hours: {toHours(summary.productiveTime)}h</p>
+                      <p>Screen Time: {toHours(summary.screenTime)}h</p>
+                      <p>Completion Rate: {summary.completionRate}%</p>
+                    </div>
+                  ))}
                 </div>
               </div>
 
               <div style={{ marginTop: "2rem" }}>
                 <h3>📊 Weekly Comparison</h3>
+                <div style={{ marginBottom: "1rem" }}>
+                  <button onClick={() => setChartType(chartType === "bar" ? "line" : "bar")}>Switch to {chartType === "bar" ? "Line" : "Bar"} Chart</button>
+                </div>
                 <ResponsiveContainer width="100%" height={400}>
-                  <BarChart data={comparisonData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <XAxis dataKey="name" />
-                    <YAxis />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="Week1" fill="#8884d8" />
-                    <Bar dataKey="Week2" fill="#82ca9d" />
-                  </BarChart>
+                  {renderChart()}
                 </ResponsiveContainer>
               </div>
             </>
@@ -204,9 +236,7 @@ const TaskHistory = ({ onBack }) => {
         </>
       )}
 
-      <button onClick={onBack} style={{ marginTop: "2rem" }}>
-        🔙 Back to Dashboard
-      </button>
+      <button onClick={onBack} style={{ marginTop: "2rem" }}>🔙 Back to Dashboard</button>
     </div>
   );
 };
