@@ -250,7 +250,7 @@ const Dashboard = ({ username, onLogout }) => {
           </div>
 
           {/* Centered Chart */}
-          <div style={{ marginTop: "2rem", display: "flex", justifyContent: "center" }}>
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", paddingTop: "1rem" }}>
             <div>
               <h3 style={{ textAlign: "center" }}>📊 Time Distribution</h3>
               <PieChart width={400} height={400}>
