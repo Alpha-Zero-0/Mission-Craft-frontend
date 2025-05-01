@@ -173,7 +173,8 @@ const Dashboard = ({ username, onLogout }) => {
     }}>
       <h2>🎯 Welcome, {username}</h2>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "2rem" }}>
+        {/* Left: Task Tracker */}
         <div style={{ flex: "1" }}>
           <div>
             <input
@@ -242,44 +243,43 @@ const Dashboard = ({ username, onLogout }) => {
             </button>
             <button onClick={onLogout}>Log Out</button>
           </div>
-
-          <div style={{ marginTop: "2rem", display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
-            <div style={{ textAlign: "center" }}>
-              <h3>📊 Time Distribution</h3>
-              <PieChart width={400} height={400}>
-                <Pie
-                  data={chartData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={120}
-                  fill="#8884d8"
-                  label
-                >
-                  {chartData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => formatTooltipTime(value)} />
-                <Legend />
-              </PieChart>
-            </div>
-          </div>
-
-          <div style={{ marginTop: "2rem" }}>
-            <h3>✅ Today's Completion Rate: {completionRate}%</h3>
-            <p>🧠 Total Productive Time: {formatTime(productiveTime)}</p>
-            <p>📱 Total Screen Time: {formatTime(screenTime)}</p>
-          </div>
         </div>
 
-        <div style={{ flex: "0 0 300px", paddingLeft: "2rem" }}>
+        {/* Middle: Pie Chart */}
+        <div style={{ flex: "0 0 420px", textAlign: "center" }}>
+          <h3>📊 Time Distribution</h3>
+          <PieChart width={400} height={400}>
+            <Pie
+              data={chartData}
+              dataKey="value"
+              nameKey="name"
+              cx="50%"
+              cy="50%"
+              outerRadius={120}
+              fill="#8884d8"
+              label
+            >
+              {chartData.map((entry, index) => (
+                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+              ))}
+            </Pie>
+            <Tooltip formatter={(value) => formatTooltipTime(value)} />
+            <Legend />
+          </PieChart>
+        </div>
+
+        {/* Right: Monster + Stats */}
+        <div style={{ flex: "0 0 300px", textAlign: "center" }}>
           <MonsterMood
             completionRate={completionRate}
             productiveTime={productiveTime}
             screenTime={screenTime}
           />
+          <div style={{ marginTop: "1rem" }}>
+            <h3>✅ Today's Completion Rate: {completionRate}%</h3>
+            <p>🧠 Productive Time: {formatTime(productiveTime)}</p>
+            <p>📱 Screen Time: {formatTime(screenTime)}</p>
+          </div>
         </div>
       </div>
     </div>
