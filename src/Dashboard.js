@@ -243,16 +243,9 @@ const Dashboard = ({ username, onLogout }) => {
             <button onClick={onLogout}>Log Out</button>
           </div>
 
-          <div style={{ marginTop: "2rem" }}>
-            <h3>✅ Today's Completion Rate: {completionRate}%</h3>
-            <p>🧠 Total Productive Time: {formatTime(productiveTime)}</p>
-            <p>📱 Total Screen Time: {formatTime(screenTime)}</p>
-          </div>
-
-          {/* Centered Chart */}
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "flex-start", paddingTop: "1rem" }}>
-            <div>
-              <h3 style={{ textAlign: "center" }}>📊 Time Distribution</h3>
+          <div style={{ marginTop: "2rem", display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
+            <div style={{ textAlign: "center" }}>
+              <h3>📊 Time Distribution</h3>
               <PieChart width={400} height={400}>
                 <Pie
                   data={chartData}
@@ -272,6 +265,12 @@ const Dashboard = ({ username, onLogout }) => {
                 <Legend />
               </PieChart>
             </div>
+          </div>
+
+          <div style={{ marginTop: "2rem" }}>
+            <h3>✅ Today's Completion Rate: {completionRate}%</h3>
+            <p>🧠 Total Productive Time: {formatTime(productiveTime)}</p>
+            <p>📱 Total Screen Time: {formatTime(screenTime)}</p>
           </div>
         </div>
 
