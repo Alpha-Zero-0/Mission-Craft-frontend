@@ -249,26 +249,29 @@ const Dashboard = ({ username, onLogout }) => {
             <p>📱 Total Screen Time: {formatTime(screenTime)}</p>
           </div>
 
-          <div style={{ marginTop: "2rem" }}>
-            <h3>📊 Time Distribution</h3>
-            <PieChart width={400} height={400}>
-              <Pie
-                data={chartData}
-                dataKey="value"
-                nameKey="name"
-                cx="50%"
-                cy="50%"
-                outerRadius={120}
-                fill="#8884d8"
-                label
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip formatter={(value) => formatTooltipTime(value)} />
-              <Legend />
-            </PieChart>
+          {/* Centered Chart */}
+          <div style={{ marginTop: "2rem", display: "flex", justifyContent: "center" }}>
+            <div>
+              <h3 style={{ textAlign: "center" }}>📊 Time Distribution</h3>
+              <PieChart width={400} height={400}>
+                <Pie
+                  data={chartData}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={120}
+                  fill="#8884d8"
+                  label
+                >
+                  {chartData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => formatTooltipTime(value)} />
+                <Legend />
+              </PieChart>
+            </div>
           </div>
         </div>
 
